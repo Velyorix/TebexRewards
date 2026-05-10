@@ -74,7 +74,7 @@ class TebexrewardsServiceProvider extends BasePluginServiceProvider
     protected function routeDescriptions(): array
     {
         return [
-            //
+            'tebexrewards.index' => trans('tebexrewards::messages.nav.leaderboard'),
         ];
     }
 
@@ -86,7 +86,18 @@ class TebexrewardsServiceProvider extends BasePluginServiceProvider
     protected function adminNavigation(): array
     {
         return [
-            //
+            'tebexrewards' => [
+                'name' => 'Tebex Rewards',
+                'type' => 'dropdown',
+                'icon' => 'bi bi-trophy-fill',
+                'route' => 'tebexrewards.admin.*',
+                'items' => [
+                    'tebexrewards.admin.settings' => trans('tebexrewards::messages.admin.nav.settings'),
+                    'tebexrewards.admin.leaderboard' => trans('tebexrewards::messages.admin.nav.leaderboard'),
+                    'tebexrewards.admin.progress' => trans('tebexrewards::messages.admin.nav.progress'),
+                    'tebexrewards.admin.ranks' => trans('tebexrewards::messages.admin.nav.ranks'),
+                ],
+            ],
         ];
     }
 
@@ -98,7 +109,11 @@ class TebexrewardsServiceProvider extends BasePluginServiceProvider
     protected function userNavigation(): array
     {
         return [
-            //
+            'tebexrewards' => [
+                'route' => 'tebexrewards.index',
+                'name' => trans('tebexrewards::messages.nav.leaderboard'),
+                'icon' => 'bi bi-trophy',
+            ],
         ];
     }
 }

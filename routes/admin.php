@@ -1,6 +1,7 @@
 <?php
 
 use Azuriom\Plugin\Tebexrewards\Controllers\Admin\AdminController;
+use Azuriom\Plugin\Tebexrewards\Controllers\Admin\SettingsController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -15,4 +16,11 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', [AdminController::class, 'index']);
+Route::get('/', [AdminController::class, 'index'])->name('index');
+
+Route::get('/settings', [SettingsController::class, 'show'])->name('settings');
+Route::post('/settings', [SettingsController::class, 'save'])->name('settings.save');
+
+Route::get('/leaderboard', [AdminController::class, 'leaderboard'])->name('leaderboard');
+Route::get('/progress', [AdminController::class, 'progress'])->name('progress');
+Route::get('/ranks', [AdminController::class, 'ranks'])->name('ranks');

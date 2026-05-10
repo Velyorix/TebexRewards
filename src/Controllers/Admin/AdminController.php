@@ -11,6 +11,21 @@ class AdminController extends Controller
      */
     public function index()
     {
-        return view('tebexrewards::admin.index');
+        return redirect()->route('tebexrewards.admin.settings');
+    }
+
+    public function leaderboard()
+    {
+        return view('tebexrewards::admin.leaderboard');
+    }
+
+    public function progress()
+    {
+        return view('tebexrewards::admin.progress');
+    }
+
+    public function ranks()
+    {
+        return view('tebexrewards::admin.ranks');
     }
 }
