@@ -3,6 +3,10 @@
 namespace Azuriom\Plugin\Tebexrewards\Providers;
 
 use Azuriom\Extensions\Plugin\BasePluginServiceProvider;
+use Azuriom\Plugin\Tebexrewards\Console\SyncTebexCommand;
+use Azuriom\Plugin\Tebexrewards\Services\SyncService;
+use Azuriom\Plugin\Tebexrewards\Services\TebexApiService;
+use Illuminate\Console\Scheduling\Schedule;
 
 class TebexrewardsServiceProvider extends BasePluginServiceProvider
 {
@@ -40,8 +44,8 @@ class TebexrewardsServiceProvider extends BasePluginServiceProvider
     public function register(): void
     {
         // $this->registerMiddleware();
-
-        //
+        $this->app->singleton(TebexApiService::class, fn () => new TebexApiService());
+        $this->app->singleton(SyncService::class, fn ($app) => new SyncService($app->make(TebexApiService::class)));
     }
 
     /**
@@ -63,7 +67,27 @@ class TebexrewardsServiceProvider extends BasePluginServiceProvider
 
         $this->registerUserNavigation();
 
-        //
+        $this->commands([
+            SyncTebexCommand::class,
+        ]);
+
+        $this->registerSchedule();
+    }
+
+    protected function schedule(Schedule $schedule) {
+        $minutes = (int) setting('tebexrewards.sync_interval', 10);
+
+        $event = $schedule->command('tebexrewards:sync');
+
+        match ($minutes) {
+            5 => $event->everyFiveMinutes(),
+            10 => $event->everyTenMinutes(),
+            30 => $event->everyThirtyMinutes(),
+            60 => $event->hourly(),
+            default => $event->everyTenMinutes(),
+        };
+
+        $event->withoutOverlapping(10);
     }
 
     /**

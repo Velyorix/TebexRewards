@@ -1,6 +1,10 @@
 <?php
 
 return [
+    'defaults' => [
+        'goal_message_reached' => '🎉 Goal reached! Thank you everyone! 🎉',
+    ],
+
     'nav' => [
         'leaderboard' => 'Donor leaderboard',
     ],
@@ -80,5 +84,15 @@ return [
             'last_animation' => 'Enable animation',
             'last_animation_speed' => 'Animation speed (ms)',
         ],
+    ],
+
+    'console' => [
+        'sync_done' => 'Sync completed: :synced synced, :skipped skipped.',
+    ],
+
+    'errors' => [
+        'missing_api_key' => 'Tebex API key is missing.',
+        'invalid_api_key' => 'Tebex API key is invalid.',
+        'api_request_failed' => 'Tebex API request failed (HTTP :status).',
     ],
 ];

@@ -1,6 +1,10 @@
 <?php
 
 return [
+    'defaults' => [
+        'goal_message_reached' => '🎉 Objectif atteint ! Merci à tous ! 🎉',
+    ],
+
     'nav' => [
         'leaderboard' => 'Classement des donateurs',
     ],
@@ -80,6 +84,16 @@ return [
             'last_animation' => 'Activer l’animation',
             'last_animation_speed' => 'Vitesse d’animation (ms)',
         ],
+    ],
+
+    'console' => [
+        'sync_done' => 'Synchronisation terminée : :synced synchronisées, :skipped ignorées.',
+    ],
+
+    'errors' => [
+        'missing_api_key' => 'La clé API Tebex est manquante.',
+        'invalid_api_key' => 'La clé API Tebex est invalide.',
+        'api_request_failed' => 'La requête Tebex a échoué (HTTP :status).',
     ],
 ];
 

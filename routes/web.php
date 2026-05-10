@@ -15,4 +15,4 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', [TebexrewardsHomeController::class, 'index']);
+Route::get('/', [TebexrewardsHomeController::class, 'index'])->name('index');

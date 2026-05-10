@@ -37,7 +37,7 @@ class SettingsController extends Controller
             'goal_color_start' => (string) setting('tebexrewards.goal.color_start', '#00c853'),
             'goal_color_mid' => (string) setting('tebexrewards.goal.color_mid', '#ffd600'),
             'goal_color_end' => (string) setting('tebexrewards.goal.color_end', '#ff3d00'),
-            'goal_message_reached' => (string) setting('tebexrewards.goal.message_reached', '🎉 Objectif atteint ! Merci à tous ! 🎉'),
+            'goal_message_reached' => (string) setting('tebexrewards.goal.message_reached', trans('tebexrewards::messages.defaults.goal_message_reached')),
             'goal_reset_enabled' => (bool) setting('tebexrewards.goal.reset_enabled', false),
             'goal_reset_increment' => (float) setting('tebexrewards.goal.reset_increment', 0),
 
