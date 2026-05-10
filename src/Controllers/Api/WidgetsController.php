@@ -5,6 +5,7 @@ namespace Azuriom\Plugin\Tebexrewards\Controllers\Api;
 use Azuriom\Http\Controllers\Controller;
 use Azuriom\Plugin\Tebexrewards\Models\Transaction;
 use Azuriom\Plugin\Tebexrewards\Support\LeaderboardSettings;
+use Azuriom\Plugin\Tebexrewards\Support\TebexRewardsCache;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
@@ -17,8 +18,7 @@ class WidgetsController extends Controller {
             return response()->json(['enabled' => false]);
         }
 
-        $ttl = 30;
-        $data = Cache::remember('tebexrewards.widgets.last_purchaser', $ttl, function () {
+        $data = Cache::remember(TebexRewardsCache::LAST_PURCHASER_KEY, TebexRewardsCache::TTL_LAST_PURCHASER_SECONDS, function () {
             $tx = Transaction::latestCompleted();
             if ($tx === null) {
                 return null;
@@ -44,24 +44,35 @@ class WidgetsController extends Controller {
 
         $opts = LeaderboardSettings::resolve($request);
 
-        $entries = Transaction::leaderboard($opts['limit'], $opts['period'])
-            ->map(function (array $entry) use ($opts) {
-                $entry['amount_display'] = number_format((float) $entry['total_amount'], 2, '.', ' ');
-                if ($opts['show_avatars']) {
-                    $entry['avatar_url'] = tebexrewards_avatar_url($entry['player_name'], $entry['player_uuid'] ?? null, 24);
-                }
+        $cacheKey = TebexRewardsCache::leaderboardWidgetJsonKey($opts['period'], $opts['limit']);
 
-                return $entry;
-            })
-            ->values();
+        $payload = Cache::remember(
+            $cacheKey,
+            TebexRewardsCache::TTL_LEADERBOARD_WIDGET_JSON_SECONDS,
+            function () use ($opts) {
+                $entries = Transaction::leaderboard($opts['limit'], $opts['period'])
+                    ->map(function (array $entry) use ($opts) {
+                        $entry['amount_display'] = number_format((float) $entry['total_amount'], 2, '.', ' ');
+                        if ($opts['show_avatars']) {
+                            $entry['avatar_url'] = tebexrewards_avatar_url($entry['player_name'], $entry['player_uuid'] ?? null, 24);
+                        }
 
-        return response()->json([
-            'period' => $opts['period'],
-            'columns' => $opts['columns'],
-            'show_medals' => $opts['show_medals'],
-            'show_avatars' => $opts['show_avatars'],
-            'entries' => $entries,
-        ]);
+                        return $entry;
+                    })
+                    ->values()
+                    ->all();
+
+                return [
+                    'period' => $opts['period'],
+                    'columns' => $opts['columns'],
+                    'show_medals' => $opts['show_medals'],
+                    'show_avatars' => $opts['show_avatars'],
+                    'entries' => $entries,
+                ];
+            }
+        );
+
+        return response()->json($payload);
     }
 }
 

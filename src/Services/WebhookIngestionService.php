@@ -4,9 +4,9 @@ namespace Azuriom\Plugin\Tebexrewards\Services;
 
 use Azuriom\Models\User;
 use Azuriom\Plugin\Tebexrewards\Models\Transaction;
+use Azuriom\Plugin\Tebexrewards\Support\TebexRewardsCache;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Cache;
 
 class WebhookIngestionService
 {
@@ -74,13 +74,13 @@ class WebhookIngestionService
             Transaction::create(array_merge($attributes, [
                 'tebex_transaction_id' => $transactionId,
             ]));
-            $this->flushDerivedCaches();
+            TebexRewardsCache::invalidateAll();
 
             return ['created' => 1, 'updated' => 0, 'ignored' => 0, 'transaction_id' => $transactionId];
         }
 
         $existing->fill($attributes)->save();
-        $this->flushDerivedCaches();
+        TebexRewardsCache::invalidateAll();
 
         return ['created' => 0, 'updated' => 1, 'ignored' => 0, 'transaction_id' => $transactionId];
     }
@@ -163,15 +163,6 @@ class WebhookIngestionService
 
     private function looksLikeEmail(string $value): bool {
         return str_contains($value, '@') && filter_var($value, FILTER_VALIDATE_EMAIL) !== false;
-    }
-
-    private function flushDerivedCaches(): void {
-        $limit = max(5, min(100, (int) setting('tebexrewards.leaderboard.limit', 10)));
-        foreach (['all', 'month', 'week', 'day'] as $period) {
-            Cache::forget("tebexrewards.leaderboard.{$period}.{$limit}");
-        }
-        Cache::forget('tebexrewards.widgets.last_purchaser');
-        Cache::forget('tebexrewards.widgets.goal');
     }
 
     private function normalizeStatus(string $status): string {

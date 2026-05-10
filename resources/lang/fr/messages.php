@@ -66,6 +66,13 @@ return [
             'progress_hint' => 'Les paramètres de l’objectif se gèrent dans la page Paramètres.',
             'ranks_hint' => 'La gestion des paliers de rang apparaîtra ici une fois les paliers créés.',
         ],
+        'cache_cleared' => 'Cache Tebex Rewards vidé (classement, widgets).',
+
+        'actions' => [
+            'clear_cache' => 'Vider le cache',
+            'clear_cache_help' => 'Supprime les résultats mis en cache du classement, du dernier acheteur et de la barre d’objectif. Utile après une correction ou si les données semblent figées.',
+        ],
+
         'settings' => [
             'title' => 'Paramètres',
             'sections' => [

@@ -20,6 +20,7 @@ Route::get('/', [AdminController::class, 'index'])->name('index');
 
 Route::get('/settings', [SettingsController::class, 'show'])->name('settings');
 Route::post('/settings', [SettingsController::class, 'save'])->name('settings.save');
+Route::post('/settings/clear-cache', [SettingsController::class, 'clearCache'])->name('settings.clear_cache');
 
 Route::get('/leaderboard', [AdminController::class, 'leaderboard'])->name('leaderboard');
 Route::get('/progress', [AdminController::class, 'progress'])->name('progress');

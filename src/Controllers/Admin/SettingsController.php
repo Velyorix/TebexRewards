@@ -5,6 +5,7 @@ namespace Azuriom\Plugin\Tebexrewards\Controllers\Admin;
 use Azuriom\Http\Controllers\Controller;
 use Azuriom\Models\Setting;
 use Azuriom\Plugin\Tebexrewards\Requests\TebexRewardsSettingsRequest;
+use Azuriom\Plugin\Tebexrewards\Support\TebexRewardsCache;
 use Illuminate\Support\Facades\Crypt;
 
 class SettingsController extends Controller
@@ -104,9 +105,20 @@ class SettingsController extends Controller
             'tebexrewards.last.animation_speed' => (int) $request->input('last_animation_speed'),
         ]);
 
+        TebexRewardsCache::invalidateAll();
+
         return redirect()
             ->route('tebexrewards.admin.settings')
             ->with('success', trans('admin.settings.updated'));
+    }
+
+    public function clearCache()
+    {
+        TebexRewardsCache::invalidateAll();
+
+        return redirect()
+            ->route('tebexrewards.admin.settings')
+            ->with('success', trans('tebexrewards::messages.admin.cache_cleared'));
     }
 }
 

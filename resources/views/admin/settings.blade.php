@@ -62,6 +62,16 @@
                     <label class="form-check-label" for="maintenanceSwitch">{{ trans('tebexrewards::messages.admin.fields.maintenance') }}</label>
                 </div>
 
+                <div class="mb-4">
+                    <form action="{{ route('tebexrewards.admin.settings.clear_cache') }}" method="POST" class="d-inline">
+                        @csrf
+                        <button type="submit" class="btn btn-outline-secondary">
+                            {{ trans('tebexrewards::messages.admin.actions.clear_cache') }}
+                        </button>
+                    </form>
+                    <small class="form-text text-muted d-block mt-2">{{ trans('tebexrewards::messages.admin.actions.clear_cache_help') }}</small>
+                </div>
+
                 <hr class="my-4">
 
                 <h2 class="h4">{{ trans('tebexrewards::messages.admin.settings.sections.leaderboard') }}</h2>

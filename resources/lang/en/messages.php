@@ -66,6 +66,13 @@ return [
             'progress_hint' => 'Goal progress settings are managed in the Settings page.',
             'ranks_hint' => 'Rank tiers management will appear here once tiers are created.',
         ],
+        'cache_cleared' => 'Tebex Rewards cache cleared (leaderboard and widgets).',
+
+        'actions' => [
+            'clear_cache' => 'Clear cache',
+            'clear_cache_help' => 'Clears cached leaderboard, last purchaser and goal bar payloads. Use after data fixes or if values look stale.',
+        ],
+
         'settings' => [
             'title' => 'Settings',
             'sections' => [

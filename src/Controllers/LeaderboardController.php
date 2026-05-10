@@ -6,6 +6,7 @@ use Azuriom\Http\Controllers\Controller;
 use Azuriom\Plugin\Tebexrewards\Models\Transaction;
 use Azuriom\Plugin\Tebexrewards\Services\GoalProgressService;
 use Azuriom\Plugin\Tebexrewards\Support\LeaderboardSettings;
+use Azuriom\Plugin\Tebexrewards\Support\TebexRewardsCache;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
@@ -16,10 +17,13 @@ class LeaderboardController extends Controller {
 
         $opts = LeaderboardSettings::resolve($request);
 
-        $cacheTtl = 600;
-        $cacheKey = "tebexrewards.leaderboard.{$opts['period']}.{$opts['limit']}";
+        $cacheKey = TebexRewardsCache::leaderboardPageKey($opts['period'], $opts['limit']);
 
-        $entries = Cache::remember($cacheKey, $cacheTtl, fn () => Transaction::leaderboard($opts['limit'], $opts['period']));
+        $entries = Cache::remember(
+            $cacheKey,
+            TebexRewardsCache::TTL_LEADERBOARD_PAGE_SECONDS,
+            fn () => Transaction::leaderboard($opts['limit'], $opts['period'])
+        );
 
         return view('tebexrewards::public.leaderboard', [
             'period' => $opts['period'],
@@ -28,7 +32,11 @@ class LeaderboardController extends Controller {
             'showMedals' => $opts['show_medals'],
             'showAvatars' => $opts['show_avatars'],
             'entries' => $entries,
-            'goal' => Cache::remember('tebexrewards.widgets.goal', 60, fn () => $goal->get()),
+            'goal' => Cache::remember(
+                TebexRewardsCache::GOAL_WIDGET_KEY,
+                TebexRewardsCache::TTL_GOAL_WIDGET_SECONDS,
+                fn () => $goal->get()
+            ),
             'lastEnabled' => (bool) setting('tebexrewards.last.enabled', true),
             'lastShowPackage' => (bool) setting('tebexrewards.last.show_package', true),
             'lastShowAmount' => (bool) setting('tebexrewards.last.show_amount', true),

@@ -106,6 +106,14 @@ class Transaction extends Model
     {
         return static::query()
             ->completed()
+            ->select([
+                'id',
+                'player_name',
+                'amount',
+                'currency',
+                'package_name',
+                'purchase_date',
+            ])
             ->orderByDesc('purchase_date')
             ->orderByDesc('id')
             ->first();
