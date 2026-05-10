@@ -17,12 +17,22 @@ return [
     ],
 
     'leaderboard' => [
+        'title' => 'Donor leaderboard',
+        'redirecting' => 'Redirecting…',
+        'period' => 'Period',
+        'limit' => 'Displayed',
+        'limit_locked' => 'The number of players is configured by the server.',
+        'empty' => 'No transactions yet.',
         'columns' => [
             'rank' => 'Rank',
             'player' => 'Player',
             'amount' => 'Total amount',
             'purchases' => 'Purchases',
         ],
+    ],
+
+    'actions' => [
+        'apply' => 'Apply',
     ],
 
     'admin' => [

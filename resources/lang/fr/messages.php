@@ -17,12 +17,22 @@ return [
     ],
 
     'leaderboard' => [
+        'title' => 'Classement des donateurs',
+        'redirecting' => 'Redirection…',
+        'period' => 'Période',
+        'limit' => 'Affichage',
+        'limit_locked' => 'Le nombre de joueurs est configuré par le serveur.',
+        'empty' => 'Aucune transaction pour le moment.',
         'columns' => [
             'rank' => 'Rang',
             'player' => 'Joueur',
             'amount' => 'Montant total',
             'purchases' => 'Achats',
         ],
+    ],
+
+    'actions' => [
+        'apply' => 'Appliquer',
     ],
 
     'admin' => [
