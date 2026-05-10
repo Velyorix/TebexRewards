@@ -27,6 +27,22 @@
                 </div>
 
                 <div class="mb-3">
+                    <label class="form-label" for="webhookSecretInput">{{ trans('tebexrewards::messages.admin.fields.webhook_secret') }}</label>
+                    <input
+                        type="password"
+                        class="form-control @error('webhook_secret') is-invalid @enderror"
+                        id="webhookSecretInput"
+                        name="webhook_secret"
+                        value="{{ old('webhook_secret', $webhook_secret) }}"
+                        autocomplete="new-password"
+                    >
+                    @error('webhook_secret')
+                    <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                    @enderror
+                    <small class="form-text text-muted">{{ trans('tebexrewards::messages.admin.fields.webhook_secret_help') }}</small>
+                </div>
+
+                <div class="mb-3">
                     <label class="form-label" for="syncIntervalSelect">{{ trans('tebexrewards::messages.admin.fields.sync_interval') }}</label>
                     <select class="form-select @error('sync_interval') is-invalid @enderror" id="syncIntervalSelect" name="sync_interval" required>
                         @foreach([5, 10, 30, 60] as $value)

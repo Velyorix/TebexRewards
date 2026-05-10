@@ -1,6 +1,7 @@
 <?php
 
 use Azuriom\Plugin\Tebexrewards\Controllers\Api\ApiController;
+use Azuriom\Plugin\Tebexrewards\Controllers\Api\WebhookController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -15,3 +16,5 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', [ApiController::class, 'index']);
+
+Route::post('/webhook', [WebhookController::class, 'handle'])->name('webhook');

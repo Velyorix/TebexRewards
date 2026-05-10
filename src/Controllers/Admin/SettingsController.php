@@ -21,8 +21,20 @@ class SettingsController extends Controller
             }
         }
 
+        $encryptedWebhookSecret = setting('tebexrewards.webhook_secret', '');
+        $webhookSecret = '';
+
+        if ($encryptedWebhookSecret !== '') {
+            try {
+                $webhookSecret = Crypt::decryptString($encryptedWebhookSecret);
+            } catch (\Throwable $e) {
+                $webhookSecret = '';
+            }
+        }
+
         return view('tebexrewards::admin.settings', [
             'api_key' => $apiKey,
+            'webhook_secret' => $webhookSecret,
             'sync_interval' => (int) setting('tebexrewards.sync_interval', 10),
             'leaderboard_limit' => (int) setting('tebexrewards.leaderboard.limit', 10),
             'leaderboard_period' => (string) setting('tebexrewards.leaderboard.period', 'all'),
@@ -54,6 +66,9 @@ class SettingsController extends Controller
         $apiKey = (string) $request->input('tebex_api_key', '');
         $encryptedApiKey = $apiKey !== '' ? Crypt::encryptString($apiKey) : '';
 
+        $webhookSecret = (string) $request->input('webhook_secret', '');
+        $encryptedWebhookSecret = $webhookSecret !== '' ? Crypt::encryptString($webhookSecret) : '';
+
         $columns = $request->input('leaderboard_columns', []);
         if (! is_array($columns)) {
             $columns = [];
@@ -61,6 +76,7 @@ class SettingsController extends Controller
 
         Setting::updateSettings([
             'tebexrewards.tebex_api_key' => $encryptedApiKey,
+            'tebexrewards.webhook_secret' => $encryptedWebhookSecret,
             'tebexrewards.sync_interval' => (int) $request->input('sync_interval'),
             'tebexrewards.maintenance' => (bool) $request->boolean('maintenance_mode'),
 

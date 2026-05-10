@@ -35,6 +35,7 @@ class TebexRewardsSettingsRequest extends FormRequest {
     public function rules(): array {
         return [
             'tebex_api_key' => ['nullable', 'string', 'max:255'],
+            'webhook_secret' => ['nullable', 'string', 'max:255'],
             'sync_interval' => ['required', 'integer', 'in:5,10,30,60'],
             'maintenance_mode' => ['nullable', 'boolean'],
 
@@ -67,6 +68,7 @@ class TebexRewardsSettingsRequest extends FormRequest {
     public function attributes(): array {
         return [
             'tebex_api_key' => trans('tebexrewards::messages.admin.fields.tebex_api_key'),
+            'webhook_secret' => trans('tebexrewards::messages.admin.fields.webhook_secret'),
             'sync_interval' => trans('tebexrewards::messages.admin.fields.sync_interval'),
             'maintenance_mode' => trans('tebexrewards::messages.admin.fields.maintenance'),
             'leaderboard_limit' => trans('tebexrewards::messages.admin.fields.leaderboard_limit'),

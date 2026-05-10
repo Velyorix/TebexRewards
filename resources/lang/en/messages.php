@@ -58,6 +58,8 @@ return [
         'fields' => [
             'tebex_api_key' => 'Tebex API key',
             'tebex_api_key_help' => 'Stored encrypted in settings. Required for sync and webhooks validation.',
+            'webhook_secret' => 'Webhook secret',
+            'webhook_secret_help' => 'Used to validate Tebex webhooks (HMAC SHA256 in X-Signature). Stored encrypted in settings.',
             'sync_interval' => 'Sync interval',
             'maintenance' => 'Maintenance mode (disable public modules)',
 
@@ -94,5 +96,12 @@ return [
         'missing_api_key' => 'Tebex API key is missing.',
         'invalid_api_key' => 'Tebex API key is invalid.',
         'api_request_failed' => 'Tebex API request failed (HTTP :status).',
+    ],
+
+    'webhook' => [
+        'ok' => 'Webhook accepted.',
+        'invalid_signature' => 'Invalid signature.',
+        'invalid_payload' => 'Invalid payload.',
+        'missing_secret' => 'Webhook secret is missing.',
     ],
 ];

@@ -6,6 +6,7 @@ use Azuriom\Extensions\Plugin\BasePluginServiceProvider;
 use Azuriom\Plugin\Tebexrewards\Console\SyncTebexCommand;
 use Azuriom\Plugin\Tebexrewards\Services\SyncService;
 use Azuriom\Plugin\Tebexrewards\Services\TebexApiService;
+use Azuriom\Plugin\Tebexrewards\Services\WebhookIngestionService;
 use Illuminate\Console\Scheduling\Schedule;
 
 class TebexrewardsServiceProvider extends BasePluginServiceProvider
@@ -46,6 +47,7 @@ class TebexrewardsServiceProvider extends BasePluginServiceProvider
         // $this->registerMiddleware();
         $this->app->singleton(TebexApiService::class, fn () => new TebexApiService());
         $this->app->singleton(SyncService::class, fn ($app) => new SyncService($app->make(TebexApiService::class)));
+        $this->app->singleton(WebhookIngestionService::class, fn () => new WebhookIngestionService());
     }
 
     /**
