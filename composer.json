@@ -5,7 +5,10 @@
     "autoload": {
         "psr-4": {
             "Azuriom\\Plugin\\Tebexrewards\\": "src/"
-        }
+        },
+        "files": [
+            "src/helpers.php"
+        ]
     },
     "replace": {
         "guzzlehttp/guzzle": "*",

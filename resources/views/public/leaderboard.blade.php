@@ -5,6 +5,10 @@
 @section('content')
     <h1 class="mb-4">{{ trans('tebexrewards::messages.leaderboard.title') }}</h1>
 
+    @include('tebexrewards::public._progress', ['goal' => $goal])
+
+    @include('tebexrewards::public._last_purchaser')
+
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" action="{{ route('tebexrewards.index') }}" class="row gy-2 gx-3 align-items-end">
@@ -32,7 +36,9 @@
         </div>
     </div>
 
-    <div class="card">
+    <div class="card" id="tebexrewards-leaderboard-root"
+         data-url="{{ route('tebexrewards.api.widgets.leaderboard') }}"
+         data-period="{{ $period }}">
         <div class="table-responsive">
             <table class="table mb-0">
                 <thead>
@@ -42,7 +48,7 @@
                     @endforeach
                 </tr>
                 </thead>
-                <tbody>
+                <tbody id="tebexrewards-leaderboard-body">
                 @forelse($entries as $entry)
                     <tr>
                         @foreach($columns as $col)
@@ -60,7 +66,7 @@
                                 <td class="d-flex align-items-center gap-2">
                                     @if($showAvatars)
                                         <img
-                                            src="{{ avatar_url($entry['player_name'], 24) }}"
+                                            src="{{ tebexrewards_avatar_url($entry['player_name'], $entry['player_uuid'] ?? null, 24) }}"
                                             width="24"
                                             height="24"
                                             class="rounded"
@@ -88,5 +94,100 @@
             </table>
         </div>
     </div>
+
+    <script>
+        (function () {
+            const root = document.getElementById('tebexrewards-leaderboard-root');
+            const tbody = document.getElementById('tebexrewards-leaderboard-body');
+            if (!root || !tbody) return;
+
+            const baseUrl = root.getAttribute('data-url');
+            const emptyMessage = @json(trans('tebexrewards::messages.leaderboard.empty'));
+
+            function medalEmoji(rank) {
+                if (rank === 1) return '🥇 ';
+                if (rank === 2) return '🥈 ';
+                if (rank === 3) return '🥉 ';
+                return '';
+            }
+
+            function render(json) {
+                const cols = json.columns || [];
+                const entries = json.entries || [];
+                const showMedals = !!json.show_medals;
+                const showAvatars = !!json.show_avatars;
+
+                tbody.textContent = '';
+
+                if (!entries.length) {
+                    const tr = document.createElement('tr');
+                    const td = document.createElement('td');
+                    td.colSpan = Math.max(1, cols.length);
+                    td.className = 'text-center text-muted py-4';
+                    td.textContent = emptyMessage;
+                    tr.appendChild(td);
+                    tbody.appendChild(tr);
+                    return;
+                }
+
+                entries.forEach(function (entry) {
+                    const tr = document.createElement('tr');
+                    cols.forEach(function (col) {
+                        const td = document.createElement('td');
+                        if (col === 'rank') {
+                            const r = parseInt(entry.rank, 10) || 0;
+                            if (showMedals && r <= 3) {
+                                td.appendChild(document.createTextNode(medalEmoji(r)));
+                            }
+                            td.appendChild(document.createTextNode(String(r)));
+                        } else if (col === 'player') {
+                            td.className = 'd-flex align-items-center gap-2';
+                            if (showAvatars && entry.avatar_url) {
+                                const img = document.createElement('img');
+                                img.src = entry.avatar_url;
+                                img.width = 24;
+                                img.height = 24;
+                                img.className = 'rounded';
+                                img.alt = entry.player_name || '';
+                                img.loading = 'lazy';
+                                td.appendChild(img);
+                            }
+                            const span = document.createElement('span');
+                            span.textContent = entry.player_name || '';
+                            td.appendChild(span);
+                        } else if (col === 'amount') {
+                            td.textContent = entry.amount_display != null ? String(entry.amount_display) : '';
+                        } else if (col === 'purchases') {
+                            td.textContent = String(entry.purchases_count != null ? entry.purchases_count : '');
+                        }
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+                });
+            }
+
+            async function refresh() {
+                try {
+                    const period = root.getAttribute('data-period') || 'all';
+                    const url = baseUrl + (baseUrl.includes('?') ? '&' : '?') + 'period=' + encodeURIComponent(period);
+                    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                    if (!res.ok) return;
+                    const json = await res.json();
+                    render(json);
+                } catch (e) {}
+            }
+
+            refresh();
+            setInterval(refresh, 10000);
+
+            const periodSelect = document.getElementById('periodSelect');
+            if (periodSelect) {
+                periodSelect.addEventListener('change', function () {
+                    root.setAttribute('data-period', periodSelect.value);
+                    refresh();
+                });
+            }
+        })();
+    </script>
 @endsection
 

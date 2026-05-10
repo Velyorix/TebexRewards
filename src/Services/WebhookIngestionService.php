@@ -2,10 +2,11 @@
 
 namespace Azuriom\Plugin\Tebexrewards\Services;
 
+use Azuriom\Models\User;
 use Azuriom\Plugin\Tebexrewards\Models\Transaction;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class WebhookIngestionService
 {
@@ -33,21 +34,8 @@ class WebhookIngestionService
             $purchaseDate = now();
         }
 
-        $customerUsername = Arr::get($subject, 'customer.username');
-        $playerName = null;
-
-        if (is_string($customerUsername) && $customerUsername !== '') {
-            $playerName = $customerUsername;
-        } elseif (is_array($customerUsername)) {
-            $u = Arr::get($customerUsername, 'username');
-            if (is_string($u) && $u !== '') {
-                $playerName = $u;
-            }
-        }
-
-        if ($playerName === null) {
-            $playerName = (string) (Arr::get($subject, 'username') ?? Arr::get($subject, 'customer.email') ?? 'unknown');
-        }
+        $playerName = $this->resolvePlayerName($subject);
+        $playerUuid = $this->resolvePlayerUuid($subject);
 
         $currency = Arr::get($subject, 'price_paid.currency')
             ?? Arr::get($subject, 'price.currency')
@@ -69,7 +57,7 @@ class WebhookIngestionService
         $packageId = is_numeric($packageId) ? (int) $packageId : null;
 
         $attributes = [
-            'player_uuid' => null,
+            'player_uuid' => $playerUuid,
             'player_name' => $playerName,
             'package_id' => $packageId,
             'package_name' => $packageName,
@@ -86,13 +74,104 @@ class WebhookIngestionService
             Transaction::create(array_merge($attributes, [
                 'tebex_transaction_id' => $transactionId,
             ]));
+            $this->flushDerivedCaches();
 
             return ['created' => 1, 'updated' => 0, 'ignored' => 0, 'transaction_id' => $transactionId];
         }
 
         $existing->fill($attributes)->save();
+        $this->flushDerivedCaches();
 
         return ['created' => 0, 'updated' => 1, 'ignored' => 0, 'transaction_id' => $transactionId];
+    }
+
+    /**
+     * @param  array<string, mixed>  $subject
+     */
+    private function resolvePlayerName(array $subject): string {
+        $customerUsername = Arr::get($subject, 'customer.username');
+        if (is_string($customerUsername) && $customerUsername !== '' && ! $this->looksLikeEmail($customerUsername)) {
+            return $customerUsername;
+        }
+        if (is_array($customerUsername)) {
+            $u = Arr::get($customerUsername, 'username');
+            if (is_string($u) && $u !== '') {
+                return $u;
+            }
+        }
+
+        $top = Arr::get($subject, 'username');
+        if (is_string($top) && $top !== '' && ! $this->looksLikeEmail($top)) {
+            return $top;
+        }
+
+        $products = Arr::get($subject, 'products');
+        if (is_array($products)) {
+            foreach ($products as $product) {
+                if (! is_array($product)) {
+                    continue;
+                }
+                $pu = Arr::get($product, 'username');
+                if (is_string($pu) && $pu !== '' && ! $this->looksLikeEmail($pu)) {
+                    return $pu;
+                }
+                if (is_array($pu)) {
+                    $u = Arr::get($pu, 'username');
+                    if (is_string($u) && $u !== '') {
+                        return $u;
+                    }
+                }
+            }
+        }
+
+        $email = Arr::get($subject, 'customer.email');
+        if (is_string($email) && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $fromSiteUser = User::query()->where('email', $email)->value('name');
+            if (is_string($fromSiteUser) && $fromSiteUser !== '') {
+                return $fromSiteUser;
+            }
+        }
+
+        return 'unknown';
+    }
+
+    /**
+     * @param  array<string, mixed>  $subject
+     */
+    private function resolvePlayerUuid(array $subject): ?string {
+        $candidates = [
+            Arr::get($subject, 'customer.username.id'),
+        ];
+
+        $products = Arr::get($subject, 'products');
+        if (is_array($products)) {
+            foreach ($products as $product) {
+                if (is_array($product)) {
+                    $candidates[] = Arr::get($product, 'username.id');
+                }
+            }
+        }
+
+        foreach ($candidates as $id) {
+            if (is_string($id) && trim($id) !== '') {
+                return trim($id);
+            }
+        }
+
+        return null;
+    }
+
+    private function looksLikeEmail(string $value): bool {
+        return str_contains($value, '@') && filter_var($value, FILTER_VALIDATE_EMAIL) !== false;
+    }
+
+    private function flushDerivedCaches(): void {
+        $limit = max(5, min(100, (int) setting('tebexrewards.leaderboard.limit', 10)));
+        foreach (['all', 'month', 'week', 'day'] as $period) {
+            Cache::forget("tebexrewards.leaderboard.{$period}.{$limit}");
+        }
+        Cache::forget('tebexrewards.widgets.last_purchaser');
+        Cache::forget('tebexrewards.widgets.goal');
     }
 
     private function normalizeStatus(string $status): string {

@@ -4,47 +4,37 @@ namespace Azuriom\Plugin\Tebexrewards\Controllers;
 
 use Azuriom\Http\Controllers\Controller;
 use Azuriom\Plugin\Tebexrewards\Models\Transaction;
+use Azuriom\Plugin\Tebexrewards\Services\GoalProgressService;
+use Azuriom\Plugin\Tebexrewards\Support\LeaderboardSettings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 class LeaderboardController extends Controller {
 
-    public function index(Request $request) {
+    public function index(Request $request, GoalProgressService $goal) {
         abort_if((bool) setting('tebexrewards.maintenance', false), 404);
 
-        $limit = (int) setting('tebexrewards.leaderboard.limit', 10);
-        $limit = max(5, min(100, $limit));
-
-        $defaultPeriod = (string) setting('tebexrewards.leaderboard.period', 'all');
-        $period = (string) $request->query('period', $defaultPeriod);
-        if (! in_array($period, ['all', 'month', 'week', 'day'], true)) {
-            $period = $defaultPeriod;
-        }
-
-        $columns = json_decode((string) setting('tebexrewards.leaderboard.columns', '["rank","player","amount","purchases"]'), true);
-        if (! is_array($columns)) {
-            $columns = ['rank', 'player', 'amount', 'purchases'];
-        }
-        $columns = array_values(array_intersect($columns, ['rank', 'player', 'amount', 'purchases']));
-        if ($columns === []) {
-            $columns = ['rank', 'player', 'amount', 'purchases'];
-        }
-
-        $showMedals = (bool) setting('tebexrewards.leaderboard.medals', true);
-        $showAvatars = (bool) setting('tebexrewards.leaderboard.avatars', true);
+        $opts = LeaderboardSettings::resolve($request);
 
         $cacheTtl = 600;
-        $cacheKey = "tebexrewards.leaderboard.{$period}.{$limit}";
+        $cacheKey = "tebexrewards.leaderboard.{$opts['period']}.{$opts['limit']}";
 
-        $entries = Cache::remember($cacheKey, $cacheTtl, fn () => Transaction::leaderboard($limit, $period));
+        $entries = Cache::remember($cacheKey, $cacheTtl, fn () => Transaction::leaderboard($opts['limit'], $opts['period']));
 
         return view('tebexrewards::public.leaderboard', [
-            'period' => $period,
-            'limit' => $limit,
-            'columns' => $columns,
-            'showMedals' => $showMedals,
-            'showAvatars' => $showAvatars,
+            'period' => $opts['period'],
+            'limit' => $opts['limit'],
+            'columns' => $opts['columns'],
+            'showMedals' => $opts['show_medals'],
+            'showAvatars' => $opts['show_avatars'],
             'entries' => $entries,
+            'goal' => Cache::remember('tebexrewards.widgets.goal', 60, fn () => $goal->get()),
+            'lastEnabled' => (bool) setting('tebexrewards.last.enabled', true),
+            'lastShowPackage' => (bool) setting('tebexrewards.last.show_package', true),
+            'lastShowAmount' => (bool) setting('tebexrewards.last.show_amount', true),
+            'lastTimestamp' => (string) setting('tebexrewards.last.timestamp', 'relative'),
+            'lastAnimation' => (bool) setting('tebexrewards.last.animation', true),
+            'lastAnimationSpeed' => (int) setting('tebexrewards.last.animation_speed', 800),
         ]);
     }
 }

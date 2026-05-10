@@ -6,6 +6,7 @@ use Azuriom\Extensions\Plugin\BasePluginServiceProvider;
 use Azuriom\Plugin\Tebexrewards\Console\SyncTebexCommand;
 use Azuriom\Plugin\Tebexrewards\Services\SyncService;
 use Azuriom\Plugin\Tebexrewards\Services\TebexApiService;
+use Azuriom\Plugin\Tebexrewards\Services\GoalProgressService;
 use Azuriom\Plugin\Tebexrewards\Services\WebhookIngestionService;
 use Illuminate\Console\Scheduling\Schedule;
 
@@ -44,10 +45,13 @@ class TebexrewardsServiceProvider extends BasePluginServiceProvider
      */
     public function register(): void
     {
+        require_once dirname(__DIR__).'/helpers.php';
+
         // $this->registerMiddleware();
         $this->app->singleton(TebexApiService::class, fn () => new TebexApiService());
         $this->app->singleton(SyncService::class, fn ($app) => new SyncService($app->make(TebexApiService::class)));
         $this->app->singleton(WebhookIngestionService::class, fn () => new WebhookIngestionService());
+        $this->app->singleton(GoalProgressService::class, fn () => new GoalProgressService());
     }
 
     /**
@@ -93,12 +97,9 @@ class TebexrewardsServiceProvider extends BasePluginServiceProvider
     }
 
     /**
-     * Returns the routes that should be able to be added to the navbar.
-     *
      * @return array<string, string>
      */
-    protected function routeDescriptions(): array
-    {
+    protected function routeDescriptions(): array {
         return [
             'tebexrewards.index' => trans('tebexrewards::messages.nav.leaderboard'),
         ];

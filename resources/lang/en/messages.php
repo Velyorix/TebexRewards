@@ -35,6 +35,23 @@ return [
         'apply' => 'Apply',
     ],
 
+    'goal' => [
+        'title' => 'Goal progress',
+        'percent' => ':percent%',
+    ],
+
+    'last' => [
+        'title' => 'Last purchaser',
+        'loading' => 'Loading…',
+        'empty' => 'No purchase yet.',
+        'spent' => 'spent :amount',
+        'on_package' => 'on ":package"',
+        'seconds_ago' => ':seconds seconds ago',
+        'minutes_ago' => ':minutes minutes ago',
+        'hours_ago' => ':hours hours ago',
+        'days_ago' => ':days days ago',
+    ],
+
     'admin' => [
         'title' => 'Tebex Rewards',
         'welcome' => 'Configure Tebex Rewards from the settings page.',
