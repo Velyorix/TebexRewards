@@ -1,0 +1,15 @@
+{
+    "id": "tebexrewards",
+    "name": "tebexrewards",
+    "description": "Plugin for Azuriom",
+    "version": "1.0.0",
+    "url": "https://azuriom.com",
+    "authors": [
+        "Velyorix"
+    ],
+    "azuriom_api": "1.1.0",
+    "providers": [
+        "\\Azuriom\\Plugin\\Tebexrewards\\Providers\\TebexrewardsServiceProvider",
+        "\\Azuriom\\Plugin\\Tebexrewards\\Providers\\RouteServiceProvider"
+    ]
+}
