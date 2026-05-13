@@ -32,14 +32,14 @@ Open **Admin → Tebex Rewards → Settings** (or **Paramètres** in French).
 | **Goal** | Target amount, currency, colours, optional reset / increment. |
 | **Last purchaser** | Enable/disable, package name, amount, timestamp format, animation. |
 
-Dedicated admin pages (same menu **Tebex Rewards**): **Leaderboard** (stats + preview + URLs), **Goal progress** (live preview + link to settings), **Ranks** (CRUD tiers, reset to CDC defaults, profile card toggle).
+Dedicated admin pages (same menu **Tebex Rewards**): **Leaderboard** (stats + preview + URLs), **Goal progress** (live preview + link to settings), **Ranks** (CRUD tiers, reset to defaults, profile card toggle).
 
 Use **Clear cache** if displayed values look stale after fixing data or changing settings.
 
 ### Supporter ranks & user profile
 
 - Configure tiers under **Admin → Tebex Rewards → Ranks** (minimum amount, emoji or image URL, badge colour, active flag).
-- **Reset to CDC defaults** restores the seven example tiers from the specification.
+- **Reset to defaults** restores the seven example tiers from the specification.
 - **Show Tebex Rewards card on user profile** adds a card on the default Azuriom profile view (`profile.index`) with lifetime total and highest matching tier (matched by `player_name` = account name and/or `player_uuid` = `game_id` on completed transactions).
 - **Custom themes** that replace the profile layout can embed `@includeWhen(plugins()->isEnabled('tebexrewards'), 'tebexrewards::user.profile_snippet', ['user' => $user])` where you want the same block.
 
@@ -120,14 +120,14 @@ Menu **Admin → Tebex Rewards → Paramètres**.
 | **Objectif** | Montant cible, devise, couleurs, option reset / incrément. |
 | **Dernier acheteur** | Activation, affichage pack / montant / date, animation. |
 
-Autres pages admin (**Tebex Rewards**) : **Classement** (stats + aperçu + liens), **Objectif** (aperçu barre + lien vers paramètres), **Rangs** (CRUD paliers, réinit. CDC, option carte profil).
+Autres pages admin (**Tebex Rewards**) : **Classement** (stats + aperçu + liens), **Objectif** (aperçu barre + lien vers paramètres), **Rangs** (CRUD paliers, réinit. , option carte profil).
 
 Utilisez **Vider le cache** si les valeurs affichées semblent figées après une correction ou un changement de configuration.
 
 ### Paliers de rang & profil
 
 - Gestion sous **Admin → Tebex Rewards → Rangs** (montant minimum, emoji ou URL d’image, couleur du badge, actif).
-- **Réinitialiser (défaut CDC)** restaure les sept paliers d’exemple du cahier des charges.
+- **Réinitialiser (défaut )** restaure les sept paliers d’exemple du cahier des charges.
 - L’option **Afficher la carte sur le profil** ajoute une carte sur le profil Azuriom par défaut (`profile.index`) : total des dons et palier le plus élevé (transactions « complete », correspondance par pseudo et/ou `game_id`).
 - Les **thèmes personnalisés** peuvent inclure `@includeWhen(plugins()->isEnabled('tebexrewards'), 'tebexrewards::user.profile_snippet', ['user' => $user])` à l’endroit souhaité.
 
