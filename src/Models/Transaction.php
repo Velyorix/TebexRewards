@@ -102,6 +102,24 @@ class Transaction extends Model
         return number_format((float) $sum, 2, '.', '');
     }
 
+    /**
+     * @return array{total_amount: float, transactions_count: int, unique_donors: int}
+     */
+    public static function donorStats(string $period): array
+    {
+        $base = static::query()->completed()->inPeriod($period);
+
+        $totalAmount = (float) ((clone $base)->sum('amount') ?? 0);
+        $transactionsCount = (int) (clone $base)->count();
+        $uniqueDonors = (int) (clone $base)->selectRaw('COUNT(DISTINCT player_name) as aggregate')->value('aggregate');
+
+        return [
+            'total_amount' => $totalAmount,
+            'transactions_count' => $transactionsCount,
+            'unique_donors' => $uniqueDonors,
+        ];
+    }
+
     public static function latestCompleted(): ?self
     {
         return static::query()
