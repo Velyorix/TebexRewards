@@ -14,6 +14,8 @@ class TebexRewardsSettingsRequest extends FormRequest {
      */
     protected array $checkboxes = [
         'maintenance_mode',
+        'nav_user_hub',
+        'nav_user_leaderboard',
         'leaderboard_medals',
         'leaderboard_avatars',
         'goal_enabled',
@@ -38,6 +40,8 @@ class TebexRewardsSettingsRequest extends FormRequest {
             'webhook_secret' => ['nullable', 'string', 'max:255'],
             'sync_interval' => ['required', 'integer', 'in:5,10,30,60'],
             'maintenance_mode' => ['nullable', 'boolean'],
+            'nav_user_hub' => ['nullable', 'boolean'],
+            'nav_user_leaderboard' => ['nullable', 'boolean'],
 
             'leaderboard_limit' => ['required', 'integer', 'min:5', 'max:100'],
             'leaderboard_period' => ['required', 'string', 'in:all,month,week,day'],
@@ -45,6 +49,8 @@ class TebexRewardsSettingsRequest extends FormRequest {
             'leaderboard_columns.*' => ['string', 'in:rank,player,amount,purchases'],
             'leaderboard_medals' => ['nullable', 'boolean'],
             'leaderboard_avatars' => ['nullable', 'boolean'],
+            'leaderboard_poll_seconds' => ['required', 'integer', 'in:5,10,15,20,30,45,60,90,120,180,300'],
+            'leaderboard_layout' => ['required', 'string', 'in:default,compact'],
 
             'goal_enabled' => ['nullable', 'boolean'],
             'goal_target' => ['required', 'numeric', 'min:0'],
@@ -71,8 +77,12 @@ class TebexRewardsSettingsRequest extends FormRequest {
             'webhook_secret' => trans('tebexrewards::messages.admin.fields.webhook_secret'),
             'sync_interval' => trans('tebexrewards::messages.admin.fields.sync_interval'),
             'maintenance_mode' => trans('tebexrewards::messages.admin.fields.maintenance'),
+            'nav_user_hub' => trans('tebexrewards::messages.admin.fields.nav_user_hub'),
+            'nav_user_leaderboard' => trans('tebexrewards::messages.admin.fields.nav_user_leaderboard'),
             'leaderboard_limit' => trans('tebexrewards::messages.admin.fields.leaderboard_limit'),
             'leaderboard_period' => trans('tebexrewards::messages.admin.fields.leaderboard_period'),
+            'leaderboard_poll_seconds' => trans('tebexrewards::messages.admin.fields.leaderboard_poll_seconds'),
+            'leaderboard_layout' => trans('tebexrewards::messages.admin.fields.leaderboard_layout'),
             'goal_target' => trans('tebexrewards::messages.admin.fields.goal_target'),
             'goal_currency' => trans('tebexrewards::messages.admin.fields.goal_currency'),
             'goal_message_reached' => trans('tebexrewards::messages.admin.fields.goal_message_reached'),
