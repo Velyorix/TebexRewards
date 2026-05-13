@@ -5,6 +5,7 @@ namespace Azuriom\Plugin\Tebexrewards\Controllers\Admin;
 use Azuriom\Http\Controllers\Controller;
 use Azuriom\Models\Setting;
 use Azuriom\Plugin\Tebexrewards\Requests\TebexRewardsSettingsRequest;
+use Azuriom\Plugin\Tebexrewards\Services\SyncService;
 use Azuriom\Plugin\Tebexrewards\Support\TebexRewardsCache;
 use Illuminate\Support\Facades\Crypt;
 
@@ -42,7 +43,11 @@ class SettingsController extends Controller
             'leaderboard_columns' => (array) json_decode((string) setting('tebexrewards.leaderboard.columns', '[]'), true),
             'leaderboard_medals' => (bool) setting('tebexrewards.leaderboard.medals', true),
             'leaderboard_avatars' => (bool) setting('tebexrewards.leaderboard.avatars', true),
+            'leaderboard_poll_seconds' => (int) setting('tebexrewards.leaderboard.poll_seconds', 10),
+            'leaderboard_layout' => (string) setting('tebexrewards.leaderboard.layout', 'default'),
             'maintenance_mode' => (bool) setting('tebexrewards.maintenance', false),
+            'nav_user_hub' => (bool) setting('tebexrewards.nav.user_hub', true),
+            'nav_user_leaderboard' => (bool) setting('tebexrewards.nav.user_leaderboard', true),
 
             'goal_enabled' => (bool) setting('tebexrewards.goal.enabled', true),
             'goal_target' => (float) setting('tebexrewards.goal.target', 3000),
@@ -80,12 +85,16 @@ class SettingsController extends Controller
             'tebexrewards.webhook_secret' => $encryptedWebhookSecret,
             'tebexrewards.sync_interval' => (int) $request->input('sync_interval'),
             'tebexrewards.maintenance' => (bool) $request->boolean('maintenance_mode'),
+            'tebexrewards.nav.user_hub' => (bool) $request->boolean('nav_user_hub'),
+            'tebexrewards.nav.user_leaderboard' => (bool) $request->boolean('nav_user_leaderboard'),
 
             'tebexrewards.leaderboard.limit' => (int) $request->input('leaderboard_limit'),
             'tebexrewards.leaderboard.period' => (string) $request->input('leaderboard_period'),
             'tebexrewards.leaderboard.columns' => json_encode(array_values($columns), JSON_UNESCAPED_UNICODE),
             'tebexrewards.leaderboard.medals' => (bool) $request->boolean('leaderboard_medals'),
             'tebexrewards.leaderboard.avatars' => (bool) $request->boolean('leaderboard_avatars'),
+            'tebexrewards.leaderboard.poll_seconds' => (int) $request->input('leaderboard_poll_seconds'),
+            'tebexrewards.leaderboard.layout' => (string) $request->input('leaderboard_layout'),
 
             'tebexrewards.goal.enabled' => (bool) $request->boolean('goal_enabled'),
             'tebexrewards.goal.target' => (float) $request->input('goal_target'),
@@ -119,6 +128,15 @@ class SettingsController extends Controller
         return redirect()
             ->route('tebexrewards.admin.settings')
             ->with('success', trans('tebexrewards::messages.admin.cache_cleared'));
+    }
+
+    public function syncNow(SyncService $syncService) {
+
+        $syncService->sync(true);
+
+        return redirect()
+            ->route('tebexrewards.admin.settings')
+            ->with('success', trans('tebexrewards::messages.admin.sync_forced'));
     }
 }
 
