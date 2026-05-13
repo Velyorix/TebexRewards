@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Plugin home')
+@section('title', trans('tebexrewards::messages.leaderboard.title'))
 
 @section('content')
-    <p>This is the demo page of your plugin.</p>
+    <p class="mb-0">{{ trans('tebexrewards::messages.leaderboard.redirecting') }}</p>
 @endsection

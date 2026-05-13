@@ -1,0 +1,23 @@
+/**
+ * Tebex Rewards
+ */
+
+.tebexrewards-lb .table thead th {
+    white-space: nowrap;
+}
+
+.tebexrewards-lb .table tbody td {
+    vertical-align: middle;
+}
+
+.tebexrewards-lb--compact .table td,
+.tebexrewards-lb--compact .table th {
+    padding-top: 0.35rem;
+    padding-bottom: 0.35rem;
+}
+
+.tebexrewards-profile-snippet .badge {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

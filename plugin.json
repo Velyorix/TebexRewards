@@ -1,9 +1,9 @@
 {
     "id": "tebexrewards",
-    "name": "tebexrewards",
-    "description": "Plugin for Azuriom",
+    "name": "Tebex Rewards",
+    "description": "Donor leaderboard, goal progress bar, last purchaser and automatic ranks for Tebex",
     "version": "1.0.0",
-    "url": "https://azuriom.com",
+    "url": "https://github.com/Velyorix/tebexrewards",
     "authors": [
         "Velyorix"
     ],

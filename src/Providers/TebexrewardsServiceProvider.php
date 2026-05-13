@@ -3,6 +3,15 @@
 namespace Azuriom\Plugin\Tebexrewards\Providers;
 
 use Azuriom\Extensions\Plugin\BasePluginServiceProvider;
+use Azuriom\Plugin\Tebexrewards\Console\SyncTebexCommand;
+use Azuriom\Plugin\Tebexrewards\Http\View\Composers\TebexrewardsProfileComposer;
+use Azuriom\Plugin\Tebexrewards\Services\DonorRankService;
+use Azuriom\Plugin\Tebexrewards\Services\GoalProgressService;
+use Azuriom\Plugin\Tebexrewards\Services\SyncService;
+use Azuriom\Plugin\Tebexrewards\Services\TebexApiService;
+use Azuriom\Plugin\Tebexrewards\Services\WebhookIngestionService;
+use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Support\Facades\View;
 
 class TebexrewardsServiceProvider extends BasePluginServiceProvider
 {
@@ -39,9 +48,14 @@ class TebexrewardsServiceProvider extends BasePluginServiceProvider
      */
     public function register(): void
     {
-        // $this->registerMiddleware();
+        require_once dirname(__DIR__).'/helpers.php';
 
-        //
+        // $this->registerMiddleware();
+        $this->app->singleton(TebexApiService::class, fn () => new TebexApiService());
+        $this->app->singleton(SyncService::class, fn ($app) => new SyncService($app->make(TebexApiService::class)));
+        $this->app->singleton(WebhookIngestionService::class, fn () => new WebhookIngestionService());
+        $this->app->singleton(GoalProgressService::class, fn () => new GoalProgressService());
+        $this->app->singleton(DonorRankService::class, fn () => new DonorRankService());
     }
 
     /**
@@ -63,18 +77,48 @@ class TebexrewardsServiceProvider extends BasePluginServiceProvider
 
         $this->registerUserNavigation();
 
-        //
+        $this->commands([
+            SyncTebexCommand::class,
+        ]);
+
+        $this->registerSchedule();
+
+        View::composer('*', function (\Illuminate\View\View $view) {
+            $name = $view->name();
+            if (str_starts_with($name, 'admin.')) {
+                return;
+            }
+            if ($name !== 'profile.index' && ! str_ends_with($name, '.profile.index')) {
+                return;
+            }
+
+            app(TebexrewardsProfileComposer::class)->compose($view);
+        });
+    }
+
+    protected function schedule(Schedule $schedule) {
+        $minutes = (int) setting('tebexrewards.sync_interval', 10);
+
+        $event = $schedule->command('tebexrewards:sync');
+
+        match ($minutes) {
+            5 => $event->everyFiveMinutes(),
+            10 => $event->everyTenMinutes(),
+            30 => $event->everyThirtyMinutes(),
+            60 => $event->hourly(),
+            default => $event->everyTenMinutes(),
+        };
+
+        $event->withoutOverlapping(10);
     }
 
     /**
-     * Returns the routes that should be able to be added to the navbar.
-     *
      * @return array<string, string>
      */
-    protected function routeDescriptions(): array
-    {
+    protected function routeDescriptions(): array {
         return [
-            //
+            'tebexrewards.index' => trans('tebexrewards::messages.route_descriptions.hub'),
+            'tebexrewards.leaderboard' => trans('tebexrewards::messages.route_descriptions.leaderboard_only'),
         ];
     }
 
@@ -86,19 +130,44 @@ class TebexrewardsServiceProvider extends BasePluginServiceProvider
     protected function adminNavigation(): array
     {
         return [
-            //
+            'tebexrewards' => [
+                'name' => 'Tebex Rewards',
+                'type' => 'dropdown',
+                'icon' => 'bi bi-trophy-fill',
+                'route' => 'tebexrewards.admin.*',
+                'items' => [
+                    'tebexrewards.admin.settings' => trans('tebexrewards::messages.admin.nav.settings'),
+                    'tebexrewards.admin.leaderboard' => trans('tebexrewards::messages.admin.nav.leaderboard'),
+                    'tebexrewards.admin.progress' => trans('tebexrewards::messages.admin.nav.progress'),
+                    'tebexrewards.admin.ranks' => trans('tebexrewards::messages.admin.nav.ranks'),
+                ],
+            ],
         ];
     }
 
     /**
-     * Return the user navigations routes to register in the user menu.
-     *
      * @return array<string, array<string, string>>
      */
     protected function userNavigation(): array
     {
-        return [
-            //
-        ];
+        $items = [];
+
+        if ((bool) setting('tebexrewards.nav.user_hub', true)) {
+            $items['tebexrewards_hub'] = [
+                'route' => 'tebexrewards.index',
+                'name' => trans('tebexrewards::messages.nav.hub'),
+                'icon' => 'bi bi-grid-3x3-gap',
+            ];
+        }
+
+        if ((bool) setting('tebexrewards.nav.user_leaderboard', true)) {
+            $items['tebexrewards_leaderboard'] = [
+                'route' => 'tebexrewards.leaderboard',
+                'name' => trans('tebexrewards::messages.nav.leaderboard_only'),
+                'icon' => 'bi bi-trophy',
+            ];
+        }
+
+        return $items;
     }
 }

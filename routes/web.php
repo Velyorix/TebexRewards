@@ -1,6 +1,6 @@
 <?php
 
-use Azuriom\Plugin\Tebexrewards\Controllers\TebexrewardsHomeController;
+use Azuriom\Plugin\Tebexrewards\Controllers\LeaderboardController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -15,4 +15,6 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', [TebexrewardsHomeController::class, 'index']);
+Route::get('/', [LeaderboardController::class, 'index'])->name('index');
+
+Route::get('/leaderboard', [LeaderboardController::class, 'leaderboardOnly'])->name('leaderboard');
