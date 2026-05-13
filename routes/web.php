@@ -16,3 +16,5 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', [LeaderboardController::class, 'index'])->name('index');
+
+Route::get('/leaderboard', [LeaderboardController::class, 'leaderboardOnly'])->name('leaderboard');
