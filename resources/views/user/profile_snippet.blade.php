@@ -1,4 +1,3 @@
-{{-- For custom themes: @includeWhen(plugins()->isEnabled('tebexrewards'), 'tebexrewards::user.profile_snippet', ['user' => $user]) --}}
 @if(isset($user) && $user instanceof \Azuriom\Models\User)
     @if(!(bool) setting('tebexrewards.maintenance', false) && (bool) setting('tebexrewards.ranks.profile_card_enabled', true))
         @php
