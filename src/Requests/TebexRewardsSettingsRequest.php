@@ -36,7 +36,9 @@ class TebexRewardsSettingsRequest extends FormRequest {
 
     public function rules(): array {
         return [
-            'tebex_api_key' => ['nullable', 'string', 'max:255'],
+            'headless_public_token' => ['nullable', 'string', 'max:255'],
+            'headless_private_key' => ['nullable', 'string', 'max:512'],
+            'headless_project_id' => ['nullable', 'string', 'max:64'],
             'webhook_secret' => ['nullable', 'string', 'max:255'],
             'sync_interval' => ['required', 'integer', 'in:5,10,30,60'],
             'maintenance_mode' => ['nullable', 'boolean'],
@@ -73,7 +75,9 @@ class TebexRewardsSettingsRequest extends FormRequest {
 
     public function attributes(): array {
         return [
-            'tebex_api_key' => trans('tebexrewards::messages.admin.fields.tebex_api_key'),
+            'headless_public_token' => trans('tebexrewards::messages.admin.fields.headless_public_token'),
+            'headless_private_key' => trans('tebexrewards::messages.admin.fields.headless_private_key'),
+            'headless_project_id' => trans('tebexrewards::messages.admin.fields.headless_project_id'),
             'webhook_secret' => trans('tebexrewards::messages.admin.fields.webhook_secret'),
             'sync_interval' => trans('tebexrewards::messages.admin.fields.sync_interval'),
             'maintenance_mode' => trans('tebexrewards::messages.admin.fields.maintenance'),
