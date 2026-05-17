@@ -45,3 +45,52 @@ if (! function_exists('tebexrewards_avatar_url')) {
         return PlayerAvatarUrlResolver::resolve($playerName, $playerUuid, $size);
     }
 }
+
+if (! function_exists('tebexrewards_player_render_url')) {
+    /**
+     * 3D Render (MCHeads /player/).
+     */
+    function tebexrewards_player_render_url(string $playerName, ?string $playerUuid = null, int $size = 100): string
+    {
+        $name = trim($playerName) !== '' ? trim($playerName) : 'MHF_Steve';
+        $uuid = null;
+
+        if ($playerUuid !== null && $playerUuid !== '') {
+            $hex = preg_replace('/[^a-fA-F0-9]/', '', $playerUuid);
+            if (strlen($hex) === 32) {
+                $uuid = strtolower(
+                    substr($hex, 0, 8).'-'.
+                    substr($hex, 8, 4).'-'.
+                    substr($hex, 12, 4).'-'.
+                    substr($hex, 16, 4).'-'.
+                    substr($hex, 20, 12)
+                );
+            }
+        }
+
+        $identifier = $uuid ?? rawurlencode($name);
+
+        return 'https://mc-heads.net/player/'.$identifier.'/'.$size;
+    }
+}
+
+if (! function_exists('tebexrewards_shop_view_data')) {
+    /**
+     *
+     * @return array<string, mixed>
+     */
+    function tebexrewards_shop_view_data(): array
+    {
+        if (! plugins()->isEnabled('tebexrewards')) {
+            return [
+                'tebexRewardsEnabled' => false,
+                'shopGoal' => [],
+                'shopTopMonthly' => null,
+                'shopTop3Monthly' => [],
+                'shopRecentBuyers' => collect(),
+            ];
+        }
+
+        return \Azuriom\Plugin\Tebexrewards\Support\ShopViewData::get();
+    }
+}
