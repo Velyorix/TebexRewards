@@ -22,9 +22,13 @@ class SyncTebexCommand extends Command
             return self::FAILURE;
         }
 
-        $this->info(trans('tebexrewards::messages.console.sync_done', [
-            'synced' => $result['synced'],
-            'skipped' => $result['skipped'],
+        $payments = $result['payments'] ?? [];
+        $this->info(trans('tebexrewards::messages.admin.sync_headless_success', [
+            'account' => $result['account_name'] ?? '—',
+            'categories' => $result['categories'],
+            'packages' => $result['packages'],
+            'payments_created' => (int) ($payments['created'] ?? 0),
+            'payments_updated' => (int) ($payments['updated'] ?? 0),
         ]));
 
         return self::SUCCESS;
