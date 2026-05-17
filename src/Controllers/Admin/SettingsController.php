@@ -5,38 +5,27 @@ namespace Azuriom\Plugin\Tebexrewards\Controllers\Admin;
 use Azuriom\Http\Controllers\Controller;
 use Azuriom\Models\Setting;
 use Azuriom\Plugin\Tebexrewards\Requests\TebexRewardsSettingsRequest;
+use Azuriom\Plugin\Tebexrewards\Services\EventLogService;
 use Azuriom\Plugin\Tebexrewards\Services\SyncService;
+use Azuriom\Plugin\Tebexrewards\Services\TebexApiService;
+use Azuriom\Plugin\Tebexrewards\Support\TebexCredentials;
 use Azuriom\Plugin\Tebexrewards\Support\TebexRewardsCache;
-use Illuminate\Support\Facades\Crypt;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 class SettingsController extends Controller
 {
-    public function show() {
-        $encryptedApiKey = setting('tebexrewards.tebex_api_key', '');
-        $apiKey = '';
-
-        if ($encryptedApiKey !== '') {
-            try {
-                $apiKey = Crypt::decryptString($encryptedApiKey);
-            } catch (\Throwable $e) {
-                $apiKey = '';
-            }
-        }
-
-        $encryptedWebhookSecret = setting('tebexrewards.webhook_secret', '');
-        $webhookSecret = '';
-
-        if ($encryptedWebhookSecret !== '') {
-            try {
-                $webhookSecret = Crypt::decryptString($encryptedWebhookSecret);
-            } catch (\Throwable $e) {
-                $webhookSecret = '';
-            }
-        }
+    public function show()
+    {
+        $tebexPlugin = plugins()->isEnabled('tebex');
 
         return view('tebexrewards::admin.settings', [
-            'api_key' => $apiKey,
-            'webhook_secret' => $webhookSecret,
+            'headless_public_token' => TebexCredentials::publicToken(),
+            'headless_private_key_configured' => TebexCredentials::hasPrivateKey(),
+            'headless_project_id' => TebexCredentials::projectId(),
+            'webhook_secret_configured' => TebexCredentials::hasWebhookSecret(),
+            'tebex_plugin_available' => $tebexPlugin,
+            'tebex_plugin_credentials' => $tebexPlugin ? TebexCredentials::fromTebexPlugin() : null,
             'sync_interval' => (int) setting('tebexrewards.sync_interval', 10),
             'leaderboard_limit' => (int) setting('tebexrewards.leaderboard.limit', 10),
             'leaderboard_period' => (string) setting('tebexrewards.leaderboard.period', 'all'),
@@ -68,12 +57,26 @@ class SettingsController extends Controller
         ]);
     }
 
-    public function save(TebexRewardsSettingsRequest $request) {
-        $apiKey = (string) $request->input('tebex_api_key', '');
-        $encryptedApiKey = $apiKey !== '' ? Crypt::encryptString($apiKey) : '';
+    public function save(TebexRewardsSettingsRequest $request)
+    {
+        $encryptedPublic = $this->persistEncryptedSecret(
+            trim((string) $request->input('headless_public_token', '')),
+            TebexCredentials::SETTING_PUBLIC_TOKEN,
+            TebexCredentials::SETTING_PUBLIC_TOKEN_LEGACY
+        );
 
-        $webhookSecret = (string) $request->input('webhook_secret', '');
-        $encryptedWebhookSecret = $webhookSecret !== '' ? Crypt::encryptString($webhookSecret) : '';
+        $encryptedPrivate = $this->persistEncryptedSecret(
+            trim((string) $request->input('headless_private_key', '')),
+            TebexCredentials::SETTING_PRIVATE_KEY
+        );
+
+        $projectId = trim((string) $request->input('headless_project_id', ''));
+
+        $webhookSecret = trim((string) $request->input('webhook_secret', ''));
+        $encryptedWebhook = $this->persistEncryptedSecret(
+            $webhookSecret,
+            TebexCredentials::SETTING_WEBHOOK_SECRET
+        );
 
         $columns = $request->input('leaderboard_columns', []);
         if (! is_array($columns)) {
@@ -81,8 +84,11 @@ class SettingsController extends Controller
         }
 
         Setting::updateSettings([
-            'tebexrewards.tebex_api_key' => $encryptedApiKey,
-            'tebexrewards.webhook_secret' => $encryptedWebhookSecret,
+            TebexCredentials::SETTING_PUBLIC_TOKEN => $encryptedPublic,
+            TebexCredentials::SETTING_PUBLIC_TOKEN_LEGACY => $encryptedPublic,
+            TebexCredentials::SETTING_PRIVATE_KEY => $encryptedPrivate,
+            TebexCredentials::SETTING_PROJECT_ID => $projectId,
+            TebexCredentials::SETTING_WEBHOOK_SECRET => $encryptedWebhook,
             'tebexrewards.sync_interval' => (int) $request->input('sync_interval'),
             'tebexrewards.maintenance' => (bool) $request->boolean('maintenance_mode'),
             'tebexrewards.nav.user_hub' => (bool) $request->boolean('nav_user_hub'),
@@ -130,13 +136,65 @@ class SettingsController extends Controller
             ->with('success', trans('tebexrewards::messages.admin.cache_cleared'));
     }
 
-    public function syncNow(SyncService $syncService) {
-
-        $syncService->sync(true);
-
-        return redirect()
-            ->route('tebexrewards.admin.settings')
-            ->with('success', trans('tebexrewards::messages.admin.sync_forced'));
+    public function syncNow(AdminController $admin, SyncService $syncService, EventLogService $eventLogs): RedirectResponse
+    {
+        return $admin->syncHeadless($syncService, $eventLogs);
     }
-}
 
+    public function testHeadlessToken(Request $request, TebexApiService $api): RedirectResponse
+    {
+        $request->validate([
+            'headless_public_token' => ['required', 'string', 'max:255'],
+            'headless_private_key' => ['nullable', 'string', 'max:512'],
+            'headless_project_id' => ['nullable', 'string', 'max:64'],
+        ]);
+
+        $public = trim((string) $request->input('headless_public_token'));
+        $private = trim((string) $request->input('headless_private_key'));
+        $projectId = trim((string) $request->input('headless_project_id'));
+
+        try {
+            $payload = $api->validatePublicToken($public);
+            $name = $payload['data']['name'] ?? $payload['name'] ?? null;
+            $message = trans('tebexrewards::messages.admin.token_test_success', [
+                'name' => is_string($name) ? $name : '—',
+            ]);
+
+            if ($private !== '' || TebexCredentials::hasPrivateKey()) {
+                $privateCheck = $api->validatePrivateKey(
+                    $private !== '' ? $private : null,
+                    $public,
+                    $projectId !== '' ? $projectId : null
+                );
+                $message .= ' '.$privateCheck['detail'];
+            }
+
+            return redirect()
+                ->route('tebexrewards.admin.settings')
+                ->withInput()
+                ->with('success', $message);
+        } catch (\Throwable $e) {
+            return redirect()
+                ->route('tebexrewards.admin.settings')
+                ->withInput()
+                ->with('error', $e->getMessage());
+        }
+    }
+
+    private function persistEncryptedSecret(string $plain, string $primaryKey, ?string $legacyKey = null): string
+    {
+        if ($plain !== '') {
+            $encrypted = TebexCredentials::encrypt($plain);
+
+            return $encrypted;
+        }
+
+        $existing = (string) setting($primaryKey, '');
+        if ($existing === '' && $legacyKey !== null) {
+            $existing = (string) setting($legacyKey, '');
+        }
+
+        return $existing;
+    }
+
+}
