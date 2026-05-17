@@ -17,9 +17,13 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', [AdminController::class, 'index'])->name('index');
+Route::get('/logs', [AdminController::class, 'logs'])->name('logs');
+Route::post('/sync-headless', [AdminController::class, 'syncHeadless'])->name('sync');
+Route::post('/logs/clear', [AdminController::class, 'clearLogs'])->name('logs.clear');
 
 Route::get('/settings', [SettingsController::class, 'show'])->name('settings');
 Route::post('/settings', [SettingsController::class, 'save'])->name('settings.save');
+Route::post('/settings/test-token', [SettingsController::class, 'testHeadlessToken'])->name('settings.test_token');
 Route::post('/settings/clear-cache', [SettingsController::class, 'clearCache'])->name('settings.clear_cache');
 Route::post('/settings/sync', [SettingsController::class, 'syncNow'])->name('settings.sync');
 
