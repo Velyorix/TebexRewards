@@ -13,12 +13,37 @@ class WebhookIngestionService
     /**
      * @return array{created:int, updated:int, ignored:int, transaction_id:?string}
      */
-    public function ingest(array $payload): array {
+    public function ingest(array $payload): array
+    {
         $subject = Arr::get($payload, 'subject');
         if (! is_array($subject)) {
             return ['created' => 0, 'updated' => 0, 'ignored' => 1, 'transaction_id' => null];
         }
 
+        return $this->ingestSubject($subject, $payload);
+    }
+
+    /**
+     *
+     * @param  array<string, mixed>  $payment
+     * @return array{created:int, updated:int, ignored:int, transaction_id:?string}
+     */
+    public function ingestPluginPayment(array $payment): array
+    {
+        return $this->ingestSubject($this->mapPluginPaymentToSubject($payment), [
+            'type' => 'payment.plugin_api',
+            'source' => 'plugin_api',
+            'payment' => $payment,
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $subject
+     * @param  array<string, mixed>  $payload
+     * @return array{created:int, updated:int, ignored:int, transaction_id:?string}
+     */
+    private function ingestSubject(array $subject, array $payload): array
+    {
         $transactionId = (string) (Arr::get($subject, 'transaction_id') ?? '');
         if ($transactionId === '') {
             return ['created' => 0, 'updated' => 0, 'ignored' => 1, 'transaction_id' => null];
@@ -86,9 +111,71 @@ class WebhookIngestionService
     }
 
     /**
+     * @param  array<string, mixed>  $payment
+     * @return array<string, mixed>
+     */
+    private function mapPluginPaymentToSubject(array $payment): array
+    {
+        $player = is_array($payment['player'] ?? null) ? $payment['player'] : [];
+        $packages = is_array($payment['packages'] ?? null) ? $payment['packages'] : [];
+        $currency = $payment['currency'] ?? null;
+        $currencyCode = is_array($currency)
+            ? (string) ($currency['iso_4217'] ?? $currency['code'] ?? '')
+            : (is_string($currency) ? $currency : null);
+
+        $products = [];
+        foreach ($packages as $package) {
+            if (! is_array($package)) {
+                continue;
+            }
+            $products[] = [
+                'id' => $package['id'] ?? null,
+                'name' => $package['name'] ?? null,
+                'username' => [
+                    'username' => $player['name'] ?? null,
+                    'id' => $player['uuid'] ?? ($player['id'] ?? null),
+                ],
+            ];
+        }
+
+        $transactionId = (string) (
+            $payment['transaction_id']
+            ?? $payment['txn_id']
+            ?? $payment['transaction']
+            ?? null
+        );
+
+        if ($transactionId === '' && isset($payment['id'])) {
+            $id = $payment['id'];
+            if (is_string($id) && $id !== '') {
+                $transactionId = $id;
+            } elseif (is_numeric($id)) {
+                $transactionId = 'tebex-'.$id;
+            }
+        }
+
+        return [
+            'transaction_id' => $transactionId,
+            'status' => $payment['status'] ?? 'Complete',
+            'created_at' => $payment['date'] ?? $payment['created_at'] ?? null,
+            'customer' => [
+                'username' => $player['name'] ?? null,
+                'email' => $payment['email'] ?? null,
+            ],
+            'username' => $player['name'] ?? null,
+            'price_paid' => [
+                'amount' => $payment['amount'] ?? 0,
+                'currency' => $currencyCode,
+            ],
+            'products' => $products,
+        ];
+    }
+
+    /**
      * @param  array<string, mixed>  $subject
      */
-    private function resolvePlayerName(array $subject): string {
+    private function resolvePlayerName(array $subject): string
+    {
         $customerUsername = Arr::get($subject, 'customer.username');
         if (is_string($customerUsername) && $customerUsername !== '' && ! $this->looksLikeEmail($customerUsername)) {
             return $customerUsername;
@@ -138,7 +225,8 @@ class WebhookIngestionService
     /**
      * @param  array<string, mixed>  $subject
      */
-    private function resolvePlayerUuid(array $subject): ?string {
+    private function resolvePlayerUuid(array $subject): ?string
+    {
         $candidates = [
             Arr::get($subject, 'customer.username.id'),
         ];
@@ -161,11 +249,13 @@ class WebhookIngestionService
         return null;
     }
 
-    private function looksLikeEmail(string $value): bool {
+    private function looksLikeEmail(string $value): bool
+    {
         return str_contains($value, '@') && filter_var($value, FILTER_VALIDATE_EMAIL) !== false;
     }
 
-    private function normalizeStatus(string $status): string {
+    private function normalizeStatus(string $status): string
+    {
         $s = strtolower(trim($status));
 
         return match (true) {
