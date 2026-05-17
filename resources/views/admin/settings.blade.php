@@ -5,7 +5,12 @@
 @section('content')
     <div class="card shadow mb-4">
         <div class="card-body">
-            <h1 class="h3 mb-4">{{ trans('tebexrewards::messages.admin.settings.title') }}</h1>
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+                <h1 class="h3 mb-0">{{ trans('tebexrewards::messages.admin.settings.title') }}</h1>
+                <a href="{{ route('tebexrewards.admin.logs') }}" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-journal-text"></i> {{ trans('tebexrewards::messages.admin.nav.logs') }}
+                </a>
+            </div>
 
             <ul class="nav nav-tabs mb-0" role="tablist">
                 <li class="nav-item" role="presentation">
@@ -22,6 +27,13 @@
                 </li>
             </ul>
 
+            <form id="headlessTokenTestForm" action="{{ route('tebexrewards.admin.settings.test_token') }}" method="POST" class="d-none">
+                @csrf
+                <input type="hidden" name="headless_public_token" id="testPublicTokenValue" value="">
+                <input type="hidden" name="headless_private_key" id="testPrivateKeyValue" value="">
+                <input type="hidden" name="headless_project_id" id="testProjectIdValue" value="">
+            </form>
+
             <form action="{{ route('tebexrewards.admin.settings.save') }}" method="POST">
                 @csrf
 
@@ -29,18 +41,59 @@
                     <div class="tab-pane fade show active" id="pane-general" role="tabpanel">
                         <p class="text-muted small mb-4">{{ trans('tebexrewards::messages.admin.settings.tabs_help.general') }}</p>
 
-                        <div class="mb-3">
-                            <label class="form-label" for="apiKeyInput">{{ trans('tebexrewards::messages.admin.fields.tebex_api_key') }}</label>
-                            <input type="password" class="form-control @error('tebex_api_key') is-invalid @enderror" id="apiKeyInput" name="tebex_api_key" value="{{ old('tebex_api_key', $api_key) }}" autocomplete="new-password">
-                            @error('tebex_api_key')<span class="invalid-feedback"><strong>{{ $message }}</strong></span>@enderror
-                            <small class="form-text text-muted">{{ trans('tebexrewards::messages.admin.fields.tebex_api_key_help') }}</small>
+                        <div class="rounded border p-3 mb-3">
+                            <h2 class="h6 mb-2">{{ trans('tebexrewards::messages.admin.credentials.title') }}</h2>
+                            <p class="text-muted small mb-3">{{ trans('tebexrewards::messages.admin.credentials.intro') }}</p>
+                            <p class="small mb-3">
+                                <a href="https://creator.tebex.io/developers/api-keys" target="_blank" rel="noopener noreferrer">
+                                    {{ trans('tebexrewards::messages.admin.credentials.docs_link') }} <i class="bi bi-box-arrow-up-right"></i>
+                                </a>
+                            </p>
+                            @if($tebex_plugin_available && $tebex_plugin_credentials)
+                                <div class="alert alert-info py-2 small mb-3">
+                                    {{ trans('tebexrewards::messages.admin.credentials.tebex_plugin_hint') }}
+                                    <button type="button" class="btn btn-sm btn-outline-primary ms-2" id="importTebexPluginCredentials">
+                                        {{ trans('tebexrewards::messages.admin.credentials.import_from_tebex') }}
+                                    </button>
+                                </div>
+                                <script type="application/json" id="tebexPluginCredentialsJson">@json($tebex_plugin_credentials)</script>
+                            @endif
+                            <label class="form-label" for="headlessPublicTokenInput">{{ trans('tebexrewards::messages.admin.fields.headless_public_token') }}</label>
+                            <input type="password" class="form-control @error('headless_public_token') is-invalid @enderror" id="headlessPublicTokenInput" name="headless_public_token" value="{{ old('headless_public_token', $headless_public_token) }}" autocomplete="new-password">
+                            @error('headless_public_token')<span class="invalid-feedback"><strong>{{ $message }}</strong></span>@enderror
+                            <small class="form-text text-muted d-block">{{ trans('tebexrewards::messages.admin.fields.headless_public_token_help') }}</small>
+                            @if($tebex_plugin_available)
+                                <small class="form-text text-muted d-block">{{ trans('tebexrewards::messages.admin.fields.headless_public_token_fallback') }}</small>
+                            @endif
+                            <div class="mt-3 mb-2">
+                                <label class="form-label" for="headlessPrivateKeyInput">{{ trans('tebexrewards::messages.admin.fields.headless_private_key') }}</label>
+                                <input type="password" class="form-control @error('headless_private_key') is-invalid @enderror" id="headlessPrivateKeyInput" name="headless_private_key" value="{{ old('headless_private_key') }}" autocomplete="new-password" placeholder="{{ $headless_private_key_configured ? trans('tebexrewards::messages.admin.credentials.secret_unchanged_placeholder') : '' }}">
+                                @error('headless_private_key')<span class="invalid-feedback"><strong>{{ $message }}</strong></span>@enderror
+                                <small class="form-text text-muted d-block">{{ trans('tebexrewards::messages.admin.fields.headless_private_key_help') }}</small>
+                                @if($headless_private_key_configured)
+                                    <small class="form-text text-success d-block"><i class="bi bi-check-circle"></i> {{ trans('tebexrewards::messages.admin.credentials.private_configured') }}</small>
+                                @endif
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label" for="headlessProjectIdInput">{{ trans('tebexrewards::messages.admin.fields.headless_project_id') }}</label>
+                                <input type="text" class="form-control font-monospace @error('headless_project_id') is-invalid @enderror" id="headlessProjectIdInput" name="headless_project_id" value="{{ old('headless_project_id', $headless_project_id) }}" autocomplete="off">
+                                @error('headless_project_id')<span class="invalid-feedback"><strong>{{ $message }}</strong></span>@enderror
+                                <small class="form-text text-muted d-block">{{ trans('tebexrewards::messages.admin.fields.headless_project_id_help') }}</small>
+                            </div>
+                            <button type="submit" form="headlessTokenTestForm" class="btn btn-outline-primary btn-sm mt-2">
+                                <i class="bi bi-plug"></i> {{ trans('tebexrewards::messages.admin.actions.test_credentials') }}
+                            </button>
                         </div>
 
+                        <h2 class="h6 mb-2 mt-4">{{ trans('tebexrewards::messages.admin.credentials.webhook_section') }}</h2>
                         <div class="mb-3">
                             <label class="form-label" for="webhookSecretInput">{{ trans('tebexrewards::messages.admin.fields.webhook_secret') }}</label>
-                            <input type="password" class="form-control @error('webhook_secret') is-invalid @enderror" id="webhookSecretInput" name="webhook_secret" value="{{ old('webhook_secret', $webhook_secret) }}" autocomplete="new-password">
+                            <input type="password" class="form-control @error('webhook_secret') is-invalid @enderror" id="webhookSecretInput" name="webhook_secret" value="{{ old('webhook_secret') }}" autocomplete="new-password" placeholder="{{ $webhook_secret_configured ? trans('tebexrewards::messages.admin.credentials.secret_unchanged_placeholder') : '' }}">
                             @error('webhook_secret')<span class="invalid-feedback"><strong>{{ $message }}</strong></span>@enderror
-                            <small class="form-text text-muted">{{ trans('tebexrewards::messages.admin.fields.webhook_secret_help') }}</small>
+                            <small class="form-text text-muted d-block">{{ trans('tebexrewards::messages.admin.fields.webhook_secret_help') }}</small>
+                            @if($webhook_secret_configured)
+                                <small class="form-text text-success d-block"><i class="bi bi-check-circle"></i> {{ trans('tebexrewards::messages.admin.credentials.webhook_configured') }}</small>
+                            @endif
                         </div>
 
                         <div class="rounded border bg-light p-3 mb-4">
@@ -277,7 +330,7 @@
                     @csrf
                     <button type="submit" class="btn btn-outline-secondary">{{ trans('tebexrewards::messages.admin.actions.clear_cache') }}</button>
                 </form>
-                <form action="{{ route('tebexrewards.admin.settings.sync') }}" method="POST">
+                <form action="{{ route('tebexrewards.admin.sync') }}" method="POST">
                     @csrf
                     <button type="submit" class="btn btn-outline-primary">{{ trans('tebexrewards::messages.admin.actions.force_sync') }}</button>
                 </form>
@@ -287,6 +340,27 @@
     </div>
 
     <script>
+        function tebexrewardsFillCredentialTestForm() {
+            document.getElementById('testPublicTokenValue').value = document.getElementById('headlessPublicTokenInput').value;
+            document.getElementById('testPrivateKeyValue').value = document.getElementById('headlessPrivateKeyInput').value;
+            document.getElementById('testProjectIdValue').value = document.getElementById('headlessProjectIdInput').value;
+        }
+
+        document.getElementById('headlessTokenTestForm')?.addEventListener('submit', function () {
+            tebexrewardsFillCredentialTestForm();
+        });
+
+        document.getElementById('importTebexPluginCredentials')?.addEventListener('click', function () {
+            var node = document.getElementById('tebexPluginCredentialsJson');
+            if (!node) return;
+            try {
+                var data = JSON.parse(node.textContent);
+                if (data.public_token) document.getElementById('headlessPublicTokenInput').value = data.public_token;
+                if (data.private_key) document.getElementById('headlessPrivateKeyInput').value = data.private_key;
+                if (data.project_id) document.getElementById('headlessProjectIdInput').value = data.project_id;
+            } catch (e) {}
+        });
+
         document.getElementById('copyWebhookEndpoint')?.addEventListener('click', function () {
             var el = document.getElementById('webhookEndpointDisplay');
             if (el && navigator.clipboard) navigator.clipboard.writeText(el.value);
