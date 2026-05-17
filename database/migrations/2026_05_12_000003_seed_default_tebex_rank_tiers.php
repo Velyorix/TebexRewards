@@ -6,12 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Default tiers (CDC §2.4) — keep in sync with {@see \Azuriom\Plugin\Tebexrewards\Models\RankTier::defaultTierRows()}.
-     *
-     * Do not reference plugin models here: this migration runs during plugin:enable
-     * before Composer PSR-4 autoload for the plugin is registered.
-     */
+
     public function up(): void
     {
         if (! Schema::hasTable('tebex_rank_tiers')) {
@@ -37,6 +32,5 @@ return new class extends Migration
 
     public function down(): void
     {
-        // Do not delete user data on rollback of seed migration.
     }
 };
